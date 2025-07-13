@@ -2,18 +2,18 @@
 
 El Vertex VX 1700 maneja los 7 filtros pasabanda a través de un contador BCD que convierte binario a decimal, el [TC4028BP](TC4028BP.PDF). De las 4 entradas binarias usa solamente 3: A (pin 10), B (pin 13) y C (pin 12), ya que son suficientes para mapear los 7 filtros. El programa para el Arduino convierte los datos binarios recibidos desde la Radioberry, usando el mismo protocolo que la Alex Filter Board.
 
-| Banda | Comando (Alex) | Arduino     | C   | B   | A   | Filtro seleccionado | Frecuencia |
-| ----- | -------------- | ----------- | --- | --- | --- | ------------------- | ---------- |
-| 160M  | 1608           | FILTER_160M | 0   | 0   | 1   | BPF1                | 1.8 MHz    |
-| 80M   | 1604           | FILTER_80m  | 0   | 1   | 0   | BPF2                | 3.5 MHz    |
-| 60M   | 1602           | FILTER_60m  | 0   | 1   | 1   | BPF3                | 5.3 MHz    |
-| 40M   | 802            | FILTER_40m  | 1   | 0   | 0   | BPF4                | 7 MHz      |
-| 30M   | 401            | FILTER_30m  | 1   | 0   | 1   | BPF5                | 10.1 MHz   |
-| 20M   | 101            | FILTER_20m  | 1   | 1   | 0   | BPF6                | 14 MHz     |
-| 17M   | 164            | FILTER_17m  | 1   | 1   | 0   | BPF6                | 18.1 MHz   |
-| 15M   | 264            | FILTER_15m  | 1   | 1   | 1   | BPF7                | 21 MHz     |
-| 12M   | 4              | case 232    | 1   | 1   | 1   | BPF7                | 24.9 MHz   |
-| 10M   | 4              | case 232    | 1   | 1   | 1   | BPF7                | 28 MHz     |
+| Banda | Comando (Alex) | C   | B   | A   | Filtro seleccionado | Frecuencia |
+| ----- | -------------- | --- | --- | --- | ------------------- | ---------- |
+| 160M  | 1608           | 0   | 0   | 1   | BPF1                | 1.8 MHz    |
+| 80M   | 1604           | 0   | 1   | 0   | BPF2                | 3.5 MHz    |
+| 60M   | 1602           | 0   | 1   | 1   | BPF3                | 5.3 MHz    |
+| 40M   | 802            | 1   | 0   | 0   | BPF4                | 7 MHz      |
+| 30M   | 401            | 1   | 0   | 1   | BPF5                | 10.1 MHz   |
+| 20M   | 101            | 1   | 1   | 0   | BPF6                | 14 MHz     |
+| 17M   | 164            | 1   | 1   | 0   | BPF6                | 18.1 MHz   |
+| 15M   | 264            | 1   | 1   | 1   | BPF7                | 21 MHz     |
+| 12M   | 4              | 1   | 1   | 1   | BPF7                | 24.9 MHz   |
+| 10M   | 4              | 1   | 1   | 1   | BPF7                | 28 MHz     |
 
 
 ## Tabla de conexiones
