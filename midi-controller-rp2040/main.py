@@ -14,10 +14,12 @@ from adafruit_midi.note_on import NoteOn
 class MIDIController:
     def __init__(self, channel=3):
         self.channel = channel
-        self.midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1], out_channel=channel)
+        self.midi = adafruit_midi.MIDI(
+            midi_out=usb_midi.ports[1], out_channel=channel)
         self.led = self._setup_led()
         self.keypad = self._setup_keypad()
         self.encoders = self._setup_encoders()
+        self.encoder_buttons = self._setup_encoder_buttons()
 
         print(f"Simple piHpsdr MIDI controller channel {channel}")
 
@@ -60,12 +62,37 @@ class MIDIController:
                 ),
                 "last_position": 0,
                 "cc_number": config["cc"],
-                "reverse": -1,
+                "reverse": 1,
                 "name": config["name"],
             }
             encoders.append(encoder)
 
         return encoders
+
+    def _setup_encoder_buttons(self):
+        button_configs = [
+            {"pin": board.GP9, "note": 71, "name": "VFO_Button"},
+            {"pin": board.GP22, "note": 72, "name": "Encoder2_Button"},
+            {"pin": board.GP8, "note": 73, "name": "Encoder3_Button"},
+            {"pin": board.GP21, "note": 74, "name": "Encoder4_Button"},
+            {"pin": board.GP20, "note": 75, "name": "Encoder5_Button"},
+        ]
+
+        buttons = []
+        for config in button_configs:
+            button_pin = digitalio.DigitalInOut(config["pin"])
+            button_pin.direction = digitalio.Direction.INPUT
+            button_pin.pull = digitalio.Pull.UP
+
+            button = {
+                "pin": button_pin,
+                "note": config["note"],
+                "name": config["name"],
+                "last_state": True,
+            }
+            buttons.append(button)
+
+        return buttons
 
     def handle_keypad(self):
         keys = self.keypad.pressed_keys
@@ -91,11 +118,13 @@ class MIDIController:
 
             if current_position < last_position:
                 control_value = 64 + encoder_data["reverse"]
-                self.midi.send(ControlChange(encoder_data["cc_number"], control_value))
+                self.midi.send(ControlChange(
+                    encoder_data["cc_number"], control_value))
                 print(f"{encoder_data['name']} down")
             elif current_position > last_position:
                 control_value = 64 - encoder_data["reverse"]
-                self.midi.send(ControlChange(encoder_data["cc_number"], control_value))
+                self.midi.send(ControlChange(
+                    encoder_data["cc_number"], control_value))
                 print(f"{encoder_data['name']} up")
 
             encoder_data["last_position"] = current_position
@@ -104,10 +133,26 @@ class MIDIController:
         for encoder_data in self.encoders:
             self.handle_encoder(encoder_data)
 
+    def handle_encoder_buttons(self):
+        for button_data in self.encoder_buttons:
+            current_state = button_data["pin"].value
+            last_state = button_data["last_state"]
+
+            if current_state != last_state:
+                if not current_state:
+                    self.midi.send(NoteOn(button_data["note"], 127))
+                    print(f"{button_data['name']} pressed")
+                else:
+                    self.midi.send(NoteOff(button_data["note"], 0))
+                    print(f"{button_data['name']} released")
+
+                button_data["last_state"] = current_state
+
     def run(self):
         while True:
             self.handle_keypad()
             self.handle_all_encoders()
+            self.handle_encoder_buttons()
             time.sleep(0.02)
 
 

@@ -1,6 +1,6 @@
 # Controlador MIDI para botones y comandos
 
-Los comandos en la Radioberry son procesados a través del protocolo MIDI. Una Raspberry PI Pico RP2040 es conectada a través de un puerto USB de la Raspberry PI 4. Este proyecto está basado en la versión original creada por [VU2DLE -- Radioberry_Console](https://github.com/VU2DLE/Radioberry_Console). Usa el mismo circuito esquemático (misma asignación de pines). El esquemático [también fue adjuntado a este repositorio](schematic.pdf).
+Los comandos en la Radioberry son procesados a través del protocolo MIDI. Una Raspberry PI Pico RP2040 es conectada a través de un puerto USB de la Raspberry PI 4. Este proyecto está basado en la versión original creada por [VU2DLE -- Radioberry_Console](https://github.com/VU2DLE/Radioberry_Console). Usa el mismo circuito esquemático (misma asignación de pines), pero con el agregado de los botones de los encoders. El esquemático [también fue adjuntado a este repositorio](schematic.pdf).
 
 ## Instalación
 
