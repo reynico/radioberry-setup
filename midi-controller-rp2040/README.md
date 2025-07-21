@@ -13,3 +13,20 @@ Los comandos en la Radioberry son procesados a través del protocolo MIDI. Una R
 7. En el programa PiHPSDR dirigirse a Menu > MIDI. En "Select MIDI Device" debería aparecer un ítem `Pico CircuitPython usb_midi.por`. Luego en esa misma ventana tocar el botón `Load` y cargar el archivo [usb-midi-definition.midi](usb-midi-definition.midi), que aloja todas las configuraciones necesarias para el mapeo de las teclas.
 
 ![MIDI configuration](midi-config-pihpsdr.png)
+
+
+## Asignación de botones
+
+```
+[4]        [24]       [34]       [44]
+STEP-      STEP+      BAND-      BAND+
+
+[3]        [23]       [33]       [43]
+ NB         NR         SNB        ANF
+
+[2]        [22]       [32]       [42]
+SPLIT      A>B        MODE-      MODE+
+
+[1]        [21]        [31]       [4]
+FILTER-    FILTER+    A<>B       PREAMP
+```
