@@ -18,7 +18,7 @@ El Vertex VX 1700 maneja los 7 filtros pasabanda a través de un contador BCD qu
 
 ## Tabla de conexiones
 
-El Arduino toma su alimentación de la línea de 3.3v de la Radioberry y se comunica con ella a través del protocolo I2C. Salida TX y Salida PA son para manejar la transmisión de un amplificador y su encendido. (PA = Power Amplifier).
+El Arduino toma su alimentación de la línea de 3.3v de la Radioberry y se comunica con ella a través del protocolo I2C. Salida TX y Salida PA son para manejar la transmisión de un amplificador y su encendido. (PA = Power Amplifier). El diagrama esquemático adjunto indica como conectar todos los pines.
 
 | Función               | Pin Radioberry | Pin Arduino | Pin TC4028BP |
 | --------------------- | -------------- | ----------- | ------------ |
