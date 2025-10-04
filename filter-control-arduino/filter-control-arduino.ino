@@ -10,6 +10,7 @@ struct FilterMap {
 };
 
 const FilterMap FILTER_TABLE[] PROGMEM = {
+  {3208, 1},  // 2200M
   {1608, 1},  // 160M
   {1604, 2},  // 80M
   {1602, 3},  // 60M
