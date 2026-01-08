@@ -19,19 +19,18 @@ const FilterMap FILTER_TABLE[] PROGMEM = {
   {101, 6},   // 20M
   {164, 6},   // 17M
   {264, 7},   // 15M
-  {4, 7}      // 12M/10M
+  {232, 7}    // 12M/10M
 };
 
 const uint8_t FILTER_TABLE_SIZE = sizeof(FILTER_TABLE) / sizeof(FilterMap);
 
-// BPF Vertex (TC4028BP)
-const uint8_t BPF_PINS[] = {9, 10, 11}; // A, B, C
-const uint8_t BPF_PIN_COUNT = 3;
+const uint8_t RELAY_PINS[] = {2, 3, 4, 5, 6, 7, 8};
+const uint8_t RELAY_COUNT = sizeof(RELAY_PINS);
 
 // Control pins
-const uint8_t PTT_PIN = 8;
-const uint8_t TX_PIN = 7;
-const uint8_t PA_PIN = 6;
+const uint8_t PTT_PIN = 10;
+const uint8_t TX_PIN = 11;
+const uint8_t PA_PIN = 12;
 
 volatile uint8_t currentCW = 0;
 volatile bool genericMode = false;
@@ -44,10 +43,11 @@ const unsigned long PTT_DEBOUNCE = 5; // 5ms debounce
 void setup() {
   Serial.begin(115200);
   
-  for (uint8_t i = 0; i < BPF_PIN_COUNT; i++) {
-    pinMode(BPF_PINS[i], OUTPUT);
+  // Inicializar relés
+  for (uint8_t i = 0; i < RELAY_COUNT; i++) {
+    pinMode(RELAY_PINS[i], OUTPUT);
+    digitalWrite(RELAY_PINS[i], LOW);
   }
-  setBPFVertex(0);
   
   pinMode(PTT_PIN, INPUT);
   pinMode(TX_PIN, OUTPUT);
@@ -61,8 +61,14 @@ void setup() {
 }
 
 inline void setBPFVertex(uint8_t filterNumber) {
-  for (uint8_t i = 0; i < BPF_PIN_COUNT; i++) {
-    digitalWrite(BPF_PINS[i], (filterNumber >> i) & 1);
+  // Desactiva todos los relés primero
+  for (uint8_t i = 0; i < RELAY_COUNT; i++) {
+    digitalWrite(RELAY_PINS[i], LOW);
+  }
+
+  // Activa solo el relé correspondiente (1 a 7)
+  if (filterNumber >= 1 && filterNumber <= RELAY_COUNT) {
+    digitalWrite(RELAY_PINS[filterNumber - 1], HIGH);
   }
 }
 
@@ -72,7 +78,7 @@ uint8_t getFilterValue(int command) {
       return pgm_read_byte(&FILTER_TABLE[i].bpfValue);
     }
   }
-  return 0; // OFF by default
+  return 0; // OFF por defecto
 }
 
 void requestEvent() {
@@ -113,11 +119,7 @@ void receiveEvent(int bytes) {
     return;
   }
   
-  if (!genericMode) {
-    command = (byte2 * 100) + byte3;
-  } else {
-    command = (byte2 * 100) + byte3;
-  }
+  command = (byte2 * 100) + byte3;
   
   if (byte1 == 3) {
     currentCW = byte3;
