@@ -1,0 +1,33 @@
+{
+    "python.defaultInterpreterPath": "./venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    
+    // Python analysis settings
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    
+    // Formatting configuration (new way)
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "always"
+        }
+    },
+    
+    // Python paths
+    "python.analysis.extraPaths": [
+        "./lib",
+        "./venv/lib/python3.11/site-packages"
+    ],
+    
+    // General editor settings
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    
+    // Flake8 extension settings (if you install the Flake8 extension)
+    "flake8.args": [
+        "--max-line-length=88",
+        "--ignore=E203,W503"
+    ]
+}
