@@ -1,6 +1,6 @@
 # Control de filtros para Vertex VX 1700
 
-El Vertex VX 1700 maneja los 7 filtros pasabanda a través de un contador BCD que convierte binario a decimal, el [TC4028BP](TC4028BP.PDF). De las 4 entradas binarias usa solamente 3: A (pin 10), B (pin 13) y C (pin 12), ya que son suficientes para mapear los 7 filtros. El programa para el Arduino convierte los datos binarios recibidos desde la Radioberry, usando el mismo protocolo que la Alex Filter Board.
+El Vertex VX 1700 maneja los 7 filtros pasabajos a través de un contador BCD que convierte binario a decimal, el [TC4028BP](TC4028BP.PDF). De las 4 entradas binarias usa solamente 3: A (pin 10), B (pin 13) y C (pin 12), ya que son suficientes para mapear los 7 filtros. El programa para el Arduino convierte los datos binarios recibidos desde la Radioberry, usando el mismo protocolo que la Alex Filter Board.
 
 | Banda | Comando (Alex) | C   | B   | A   | Filtro seleccionado | Frecuencia |
 | ----- | -------------- | --- | --- | --- | ------------------- | ---------- |
