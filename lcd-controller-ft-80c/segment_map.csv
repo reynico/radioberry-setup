@@ -1,0 +1,82 @@
+addr,bit,segment,description
+# Digito 7 (ultimo, decimal de frecuencia)
+6,1,DIG7_D,Digito 7 segmento D
+6,2,DIG7_B,Digito 7 segmento B
+6,3,DIG7_G,Digito 7 segmento G
+7,1,DIG7_E,Digito 7 segmento E
+7,2,DIG7_A,Digito 7 segmento A
+7,3,DIG7_F,Digito 7 segmento F
+8,3,DIG7_C,Digito 7 segmento C
+# Digito 6
+9,3,DIG6_C,Digito 6 segmento C
+10,1,DIG6_D,Digito 6 segmento D
+10,2,DIG6_B,Digito 6 segmento B
+10,3,DIG6_G,Digito 6 segmento G
+11,1,DIG6_E,Digito 6 segmento E
+11,2,DIG6_A,Digito 6 segmento A
+11,3,DIG6_F,Digito 6 segmento F
+# Digito 5
+12,1,DIG5_D,Digito 5 segmento D
+12,2,DIG5_B,Digito 5 segmento B
+12,3,DIG5_G,Digito 5 segmento G
+13,1,DIG5_E,Digito 5 segmento E
+13,2,DIG5_A,Digito 5 segmento A
+13,3,DIG5_F,Digito 5 segmento F
+14,3,DIG5_C,Digito 5 segmento C
+# Digito 4
+15,3,DIG4_C,Digito 4 segmento C
+16,1,DIG4_D,Digito 4 segmento D
+16,2,DIG4_B,Digito 4 segmento B
+16,3,DIG4_G,Digito 4 segmento G
+17,1,DIG4_E,Digito 4 segmento E
+17,2,DIG4_A,Digito 4 segmento A
+17,3,DIG4_F,Digito 4 segmento F
+# Digito 3 (ultimo antes del primer punto)
+18,1,DIG3_D,Digito 3 segmento D
+18,2,DIG3_B,Digito 3 segmento B
+18,3,DIG3_G,Digito 3 segmento G
+19,1,DIG3_E,Digito 3 segmento E
+19,2,DIG3_A,Digito 3 segmento A
+19,3,DIG3_F,Digito 3 segmento F
+20,3,DIG3_C,Digito 3 segmento C
+# Digito 2
+21,3,DIG2_C,Digito 2 segmento C
+22,1,DIG2_D,Digito 2 segmento D
+22,2,DIG2_B,Digito 2 segmento B
+22,3,DIG2_G,Digito 2 segmento G
+23,1,DIG2_E,Digito 2 segmento E
+23,2,DIG2_A,Digito 2 segmento A
+23,3,DIG2_F,Digito 2 segmento F
+# Digito 1 (primero, mas a la izquierda)
+24,1,DIG1_D,Digito 1 segmento D
+24,2,DIG1_B,Digito 1 segmento B
+24,3,DIG1_G,Digito 1 segmento G
+25,1,DIG1_E,Digito 1 segmento E
+25,2,DIG1_A,Digito 1 segmento A
+25,3,DIG1_F,Digito 1 segmento F
+26,3,DIG1_C,Digito 1 segmento C
+# Indicadores (confirmados por usuario)
+3,2,PRI,Indicador PRI
+8,2,NAR,Indicador NAR
+9,2,FM,Indicador FM
+14,2,AM,Indicador AM
+15,2,CW,Indicador CW
+20,2,USB,Indicador USB
+21,2,LSB,Indicador LSB
+26,2,GEN,Indicador GEN
+28,1,LOCK,Indicador LOCK
+28,2,MR,Indicador M R
+28,3,FAST,Indicador FAST
+29,1,BUSY,Indicador BUSY
+29,2,VFO_B,Indicador VFO B
+29,3,CLAR,Indicador CLAR
+30,1,SCAN,Indicador SCAN
+30,2,VFO_A,Indicador VFO A
+30,3,SPLIT,Indicador SPLIT
+31,1,CAT,Indicador CAT
+31,2,BAND,Indicador BAND
+# Puntos decimales (TBD)
+# DP1 = punto despues de DIG3
+# DP2 = punto despues de DIG6
+# Digitos pequenos CH (TBD)
+# CH1, CH2

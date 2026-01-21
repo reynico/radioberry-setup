@@ -1,0 +1,13 @@
+[Unit]
+Description=LCD Bridge for pihpsdr
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/lcd_bridge.py /dev/lcd_controller
+WorkingDirectory=/home/pi
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target
