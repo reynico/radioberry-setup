@@ -7,6 +7,7 @@
 #define PIN_CS   4
 #define PIN_WR   5
 #define PIN_DATA 6
+#define PIN_SMETER 3
 
 #define CMD_SYS_EN    0x01
 #define CMD_LCD_ON    0x03
@@ -16,6 +17,7 @@
 
 uint8_t ram[32];
 String cmdBuffer = "";
+bool catActive = false;
 
 // HT1621B low-level functions
 void ht_sendBits(uint8_t data, uint8_t bits) {
@@ -148,7 +150,7 @@ void setIndicator(uint8_t indicator, bool on) {
   setSegment(indicator, on);
 }
 
-void clearIndicators() {
+void clearModeIndicators() {
   setIndicator(IND_LSB, false);
   setIndicator(IND_USB, false);
   setIndicator(IND_CW, false);
@@ -157,8 +159,25 @@ void clearIndicators() {
   setIndicator(IND_NAR, false);
 }
 
+void clearAllIndicators() {
+  clearModeIndicators();
+  setIndicator(IND_BAND, false);
+  setIndicator(IND_SCAN, false);
+  setIndicator(IND_SPLIT, false);
+  setIndicator(IND_VFO_A, false);
+  setIndicator(IND_VFO_B, false);
+  setIndicator(IND_BUSY, false);
+  setIndicator(IND_CLAR, false);
+  setIndicator(IND_LOCK, false);
+  setIndicator(IND_FAST, false);
+  setIndicator(IND_MR, false);
+  setIndicator(IND_PRI, false);
+  setIndicator(IND_GEN, false);
+  setIndicator(IND_CAT, false);
+}
+
 void displayMode(uint8_t mode) {
-  clearIndicators();
+  clearModeIndicators();
   switch (mode) {
     case 1: setIndicator(IND_LSB, true); break;
     case 2: setIndicator(IND_USB, true); break;
@@ -175,8 +194,25 @@ void setVFO(uint8_t vfo) {
   setIndicator(IND_VFO_B, vfo == 1);
 }
 
+// S-Meter control (PWM output)
+// Input: 0-255 from bridge (already scaled from dB)
+void setSMeter(uint16_t value) {
+  if (value > 255) value = 255;
+  analogWrite(PIN_SMETER, value);
+}
+
+void initCatMode() {
+  if (!catActive) {
+    catActive = true;
+    clearAllIndicators();
+    setIndicator(IND_CAT, true);
+  }
+}
+
 // CAT command processing
 void processCommand(String cmd) {
+  initCatMode();
+
   if (cmd.startsWith("FA")) {
     String freq = cmd.substring(2);
     freq.trim();
@@ -203,12 +239,21 @@ void processCommand(String cmd) {
     }
   }
   else if (cmd.startsWith("TX")) {
-    setIndicator(IND_BUSY, false);
+    String val = cmd.substring(2);
+    val.trim();
+    if (val.length() > 0) {
+      setIndicator(IND_BUSY, val.toInt() == 0);
+    } else {
+      setIndicator(IND_BUSY, false);
+    }
     updateDisplay();
   }
-  else if (cmd.startsWith("RX")) {
-    setIndicator(IND_BUSY, true);
-    updateDisplay();
+  else if (cmd.startsWith("SM")) {
+    String val = cmd.substring(2);
+    val.trim();
+    if (val.length() > 0) {
+      setSMeter(val.toInt());
+    }
   }
 }
 
@@ -216,6 +261,8 @@ void setup() {
   pinMode(PIN_CS, OUTPUT);
   pinMode(PIN_WR, OUTPUT);
   pinMode(PIN_DATA, OUTPUT);
+  pinMode(PIN_SMETER, OUTPUT);
+  analogWrite(PIN_SMETER, 0);
 
   Serial.begin(9600);
 

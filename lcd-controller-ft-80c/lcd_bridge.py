@@ -8,13 +8,13 @@ RIGCTL_HOST = "127.0.0.1"
 RIGCTL_PORT = 19090
 SERIAL_PORT = "/dev/lcd_controller"
 SERIAL_BAUD = 9600
-POLL_INTERVAL = 0.5
+POLL_INTERVAL = 0.3
 
 def cat_command(sock, cmd):
     try:
         sock.sendall(cmd.encode())
-        time.sleep(0.05)
         response = b""
+        sock.settimeout(1)
         while True:
             chunk = sock.recv(1024)
             if not chunk:
@@ -23,14 +23,9 @@ def cat_command(sock, cmd):
             if b";" in chunk:
                 break
         return response.decode().strip()
-    except:
+    except Exception as e:
+        print(f"ERROR cmd={cmd}: {e}")
         return None
-
-def parse_response(resp, prefix):
-    if resp and resp.startswith(prefix):
-        value = resp[len(prefix):].rstrip(";")
-        return value
-    return None
 
 def main():
     serial_port = SERIAL_PORT
@@ -39,13 +34,15 @@ def main():
 
     print(f"LCD Bridge starting")
     print(f"CAT server: {RIGCTL_HOST}:{RIGCTL_PORT}")
-    print(f"Serial port: {serial_port}")
+    print(f"Serial: {serial_port}")
 
     ser = None
     sock = None
     last_freq = ""
     last_mode = ""
-    last_smeter = ""
+    last_vfo = ""
+    last_tx = ""
+    last_sm = None
     waiting_for_pihpsdr = False
     waiting_for_arduino = False
 
@@ -56,7 +53,6 @@ def main():
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.settimeout(5)
                     sock.connect((RIGCTL_HOST, RIGCTL_PORT))
-                    sock.setblocking(False)
                     print("Connected to pihpsdr")
                     waiting_for_pihpsdr = False
                 except socket.error:
@@ -81,31 +77,54 @@ def main():
                     time.sleep(2)
                     continue
 
-            sock.setblocking(True)
-            sock.settimeout(2)
+            if_resp = cat_command(sock, "IF;")
 
-            freq_resp = cat_command(sock, "FA;")
-            freq = parse_response(freq_resp, "FA")
+            freq = None
+            mode = None
+            tx = None
 
-            mode_resp = cat_command(sock, "MD;")
-            mode = parse_response(mode_resp, "MD")
+            if if_resp and if_resp.startswith("IF") and len(if_resp) >= 38:
+                freq = if_resp[2:13].lstrip("0") or "0"
+                tx = if_resp[28]
+                mode = if_resp[29]
 
-            smeter_resp = cat_command(sock, "SM0;")
-            smeter = parse_response(smeter_resp, "SM")
+            fr_resp = cat_command(sock, "FR;")
+            vfo = None
+            if fr_resp and fr_resp.startswith("FR"):
+                vfo = fr_resp[2:3]
+
+            sm_resp = cat_command(sock, "SM0;")
+            sm = None
+            sm_db = None
+            if sm_resp and sm_resp.startswith("SM"):
+                try:
+                    sm_db = int(sm_resp[2:].rstrip(";"))
+                    sm_min = -115
+                    sm_max = -53
+                    sm_clamped = max(sm_min, min(sm_max, sm_db))
+                    sm = int((sm_clamped - sm_min) * 255 / (sm_max - sm_min))
+                except ValueError:
+                    pass
 
             if freq and freq != last_freq:
                 ser.write(f"FA{freq};\n".encode())
                 last_freq = freq
-                print(f"Freq: {freq}")
 
             if mode and mode != last_mode:
                 ser.write(f"MD{mode};\n".encode())
                 last_mode = mode
-                print(f"Mode: {mode}")
 
-            if smeter and smeter != last_smeter:
-                ser.write(f"SM{smeter};\n".encode())
-                last_smeter = smeter
+            if vfo and vfo != last_vfo:
+                ser.write(f"FR{vfo};\n".encode())
+                last_vfo = vfo
+
+            if tx and tx != last_tx:
+                ser.write(f"TX{tx};\n".encode())
+                last_tx = tx
+
+            if sm is not None and sm != last_sm:
+                ser.write(f"SM{sm};\n".encode())
+                last_sm = sm
 
             time.sleep(POLL_INTERVAL)
 
@@ -115,7 +134,9 @@ def main():
             sock = None
             last_freq = ""
             last_mode = ""
-            last_smeter = ""
+            last_vfo = ""
+            last_tx = ""
+            last_sm = None
 
         except serial.SerialException:
             if ser:
