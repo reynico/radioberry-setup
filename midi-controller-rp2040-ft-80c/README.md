@@ -12,8 +12,8 @@ Todos los botones se conectan a masa cuando se presionan, usando resistencias pu
 | narrow        | GP0      | 1         |
 | att           | GP1      | 2         |
 | noise blanker | GP2      | 3         |
-| mode <        | GP3      | 4         |
-| mode >        | GP4      | 5         |
+| mode <        | GP15     | 4         |
+| mode >        | GP16     | 5         |
 | vfo > m       | GP5      | 6         |
 | m > vfo       | GP6      | 7         |
 | vfo           | GP7      | 8         |
@@ -39,7 +39,7 @@ Un único encoder rotativo sin botón para control de frecuencia:
 
 | Función   | Pines      | MIDI CC |
 | --------- | ---------- | ------- |
-| frequency | GP15, GP16 | 11      |
+| frequency | GP3, GP4   | 11      |
 
 ### LED
 El LED integrado (GP25) indica actividad de los botones.

@@ -32,8 +32,8 @@ class MIDIController:
             {"pin": board.GP0, "note": 1, "name": "narrow"},
             {"pin": board.GP1, "note": 2, "name": "att"},
             {"pin": board.GP2, "note": 3, "name": "noise_blanker"},
-            {"pin": board.GP3, "note": 4, "name": "mode_down"},
-            {"pin": board.GP4, "note": 5, "name": "mode_up"},
+            {"pin": board.GP15, "note": 4, "name": "mode_down"},
+            {"pin": board.GP16, "note": 5, "name": "mode_up"},
             {"pin": board.GP5, "note": 6, "name": "vfo_to_m"},
             {"pin": board.GP6, "note": 7, "name": "m_to_vfo"},
             {"pin": board.GP7, "note": 8, "name": "vfo"},
@@ -64,9 +64,9 @@ class MIDIController:
 
     def _setup_potentiometers(self):
         pot_configs = [
-            {"pin": board.A0, "cc": 21, "name": "sql"},
-            {"pin": board.A1, "cc": 22, "name": "mic"},
-            {"pin": board.A2, "cc": 23, "name": "drive"},
+            {"pin": board.A0, "cc": 21, "name": "sql", "max_adc": 65535},
+            {"pin": board.A1, "cc": 22, "name": "mic", "max_adc": 65535},
+            {"pin": board.A2, "cc": 23, "name": "drive", "max_adc": 61000},
         ]
 
         potentiometers = []
@@ -79,6 +79,7 @@ class MIDIController:
                 "name": config["name"],
                 "last_value": 0,
                 "threshold": 512,
+                "max_adc": config["max_adc"],
             }
             potentiometers.append(potentiometer)
 
@@ -86,11 +87,13 @@ class MIDIController:
 
     def _setup_encoder(self):
         encoder = {
-            "encoder": rotaryio.IncrementalEncoder(board.GP15, board.GP16),
+            "encoder": rotaryio.IncrementalEncoder(board.GP3, board.GP4),
             "last_position": 0,
             "cc_number": 11,
-            "reverse": 1,
+            "reverse": -1,
             "name": "frequency",
+            "last_change_time": 0,
+            "debounce_ms": 50,
         }
         return encoder
 
@@ -117,7 +120,7 @@ class MIDIController:
             last_value = pot_data["last_value"]
 
             if abs(current_value - last_value) > pot_data["threshold"]:
-                midi_value = current_value >> 9
+                midi_value = min(127, (current_value * 127) // pot_data["max_adc"])
                 self.midi.send(ControlChange(pot_data["cc_number"], midi_value))
                 print(f"{pot_data['name']}: {midi_value}")
                 pot_data["last_value"] = current_value
@@ -127,6 +130,13 @@ class MIDIController:
         last_position = self.encoder["last_position"]
 
         if current_position != last_position:
+            current_time = time.monotonic_ns() // 1_000_000
+            time_since_last = current_time - self.encoder["last_change_time"]
+
+            if time_since_last < self.encoder["debounce_ms"]:
+                self.encoder["last_position"] = current_position
+                return
+
             if current_position < last_position:
                 control_value = 64 + self.encoder["reverse"]
                 self.midi.send(ControlChange(
@@ -139,6 +149,7 @@ class MIDIController:
                 print(f"{self.encoder['name']} up")
 
             self.encoder["last_position"] = current_position
+            self.encoder["last_change_time"] = current_time
 
     def run(self):
         while True:
