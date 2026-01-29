@@ -1,0 +1,12 @@
+[Unit]
+Description=Soft shutdown monitor for FT-80C
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/opt/soft-shutdown/soft-shutdown.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
