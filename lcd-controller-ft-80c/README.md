@@ -39,6 +39,29 @@ pihpsdr (CAT :19090) --> lcd_bridge.py --> /dev/lcd_controller --> Arduino --> H
 
 **IMPORTANTE**: El M50932 original debe estar desconectado/aislado del display.
 
+### S-Meter
+
+El S-meter analógico original se controla via PWM desde el Arduino:
+
+| Arduino | Componente        |
+| ------- | ----------------- |
+| D3      | PWM -> Filtro RC  |
+
+El bridge Python lee el nivel de señal via CAT y lo envía al Arduino con el comando `SM`. El Arduino genera una señal PWM en D3 que se suaviza con un filtro RC:
+
+- **R**: 23k ohm
+- **C**: 10uF electrolitico
+
+```
+D3 ---[23k]---+--- S-Meter
+              |
+             [10uF]
+              |
+             GND
+```
+
+El filtro RC convierte el PWM en una tension DC proporcional al nivel de señal.
+
 ## Archivos
 
 | Archivo                     | Descripcion                       |
