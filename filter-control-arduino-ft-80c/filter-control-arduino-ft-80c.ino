@@ -51,7 +51,7 @@ void setup() {
   pinMode(PTT_PIN, INPUT_PULLUP);
   pinMode(TX_PIN, OUTPUT);
   pinMode(PA_PIN, OUTPUT);
-  digitalWrite(TX_PIN, LOW);
+  digitalWrite(TX_PIN, HIGH);
   digitalWrite(PA_PIN, LOW);
   
   Wire.begin(I2C_ADDRESS);
