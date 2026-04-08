@@ -83,6 +83,21 @@ void setDigit(uint8_t digitIndex, uint8_t value) {
   }
 }
 
+// Display a digit on one of the two small CH digits (0=tens, 1=units)
+void setCHDigit(uint8_t digitIndex, uint8_t value) {
+  if (digitIndex > 1 || value > 11) return;
+  uint8_t pattern = CHAR_TABLE[value];
+  for (int seg = 0; seg < 7; seg++) {
+    setSegment(CH_DIGITS[digitIndex][seg], (pattern >> seg) & 1);
+  }
+}
+
+void displayBW(uint8_t value) {
+  if (value > 99) value = 99;
+  setCHDigit(0, value / 10);
+  setCHDigit(1, value % 10);
+}
+
 // Display a raw pattern on a digit
 void setDigitPattern(uint8_t digitIndex, uint8_t pattern) {
   if (digitIndex > 6) return;
@@ -247,6 +262,14 @@ void processCommand(String cmd) {
       setIndicator(IND_BUSY, false);
     }
     updateDisplay();
+  }
+  else if (cmd.startsWith("BW")) {
+    String val = cmd.substring(2);
+    val.trim();
+    if (val.length() > 0) {
+      displayBW(val.toInt());
+      updateDisplay();
+    }
   }
   else if (cmd.startsWith("SM")) {
     String val = cmd.substring(2);

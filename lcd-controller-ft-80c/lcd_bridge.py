@@ -4,6 +4,16 @@ import serial
 import time
 import sys
 
+SH_TABLE = [1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3400, 4000, 5000]
+SL_TABLE = [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+
+# pihpsdr filter presets in x10 units (100Hz=1, 2700Hz=27, etc.)
+# used to snap quantized SH/SL values to the nearest actual preset
+BW_PRESETS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 21, 24, 27, 30, 36, 42, 48, 52]
+
+def snap_bw(bw):
+    return min(BW_PRESETS, key=lambda p: abs(p - bw))
+
 RIGCTL_HOST = "127.0.0.1"
 RIGCTL_PORT = 19090
 SERIAL_PORT = "/dev/lcd_controller"
@@ -43,6 +53,7 @@ def main():
     last_vfo = ""
     last_tx = ""
     last_sm = None
+    last_bw = None
     waiting_for_pihpsdr = False
     waiting_for_arduino = False
 
@@ -106,6 +117,25 @@ def main():
                 except ValueError:
                     pass
 
+            bw = None
+            if mode in ('3', '7'):  # CW
+                fw_resp = cat_command(sock, "FW;")
+                if fw_resp and fw_resp.startswith("FW"):
+                    try:
+                        bw = min(int(fw_resp[2:].rstrip(";")) // 100, 99)
+                    except ValueError:
+                        pass
+            elif mode in ('1', '2'):  # LSB, USB
+                sh_resp = cat_command(sock, "SH;")
+                sl_resp = cat_command(sock, "SL;")
+                if sh_resp and sh_resp.startswith("SH") and sl_resp and sl_resp.startswith("SL"):
+                    try:
+                        sh_hz = SH_TABLE[int(sh_resp[2:].rstrip(";"))]
+                        sl_hz = SL_TABLE[int(sl_resp[2:].rstrip(";"))]
+                        bw = snap_bw(min((sh_hz - sl_hz) // 100, 99))
+                    except (ValueError, IndexError):
+                        pass
+
             if freq and freq != last_freq:
                 ser.write(f"FA{freq};\n".encode())
                 last_freq = freq
@@ -113,6 +143,7 @@ def main():
             if mode and mode != last_mode:
                 ser.write(f"MD{mode};\n".encode())
                 last_mode = mode
+                last_bw = None
 
             if vfo and vfo != last_vfo:
                 ser.write(f"FR{vfo};\n".encode())
@@ -126,6 +157,10 @@ def main():
                 ser.write(f"SM{sm};\n".encode())
                 last_sm = sm
 
+            if bw is not None and bw != last_bw:
+                ser.write(f"BW{bw};\n".encode())
+                last_bw = bw
+
             time.sleep(POLL_INTERVAL)
 
         except socket.error:
@@ -137,6 +172,7 @@ def main():
             last_vfo = ""
             last_tx = ""
             last_sm = None
+            last_bw = None
 
         except serial.SerialException:
             if ser:

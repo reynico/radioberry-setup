@@ -16,6 +16,24 @@
 //     ---
 //      D
 
+// CH digit 1 (leftmost small digit, tens)
+#define CH1_A SEG(5, 2)
+#define CH1_B SEG(4, 2)
+#define CH1_C SEG(3, 3)
+#define CH1_D SEG(4, 1)
+#define CH1_E SEG(5, 1)
+#define CH1_F SEG(5, 3)
+#define CH1_G SEG(4, 3)
+
+// CH digit 2 (rightmost small digit, units)
+#define CH2_A SEG(1, 2)
+#define CH2_B SEG(0, 2)
+#define CH2_C SEG(2, 3)
+#define CH2_D SEG(0, 1)
+#define CH2_E SEG(1, 1)
+#define CH2_F SEG(1, 3)
+#define CH2_G SEG(0, 3)
+
 // Digit 7 (rightmost, frequency decimal)
 #define DIG7_A SEG(7, 2)
 #define DIG7_B SEG(6, 2)
@@ -79,6 +97,12 @@
 #define DIG1_F SEG(25, 3)
 #define DIG1_G SEG(24, 3)
 
+// CH digit segment arrays
+static const uint8_t CH_DIGITS[2][7] = {
+  { CH1_A, CH1_B, CH1_C, CH1_D, CH1_E, CH1_F, CH1_G },
+  { CH2_A, CH2_B, CH2_C, CH2_D, CH2_E, CH2_F, CH2_G },
+};
+
 // Digit segment arrays for easy access
 // Usage: DIGITS[digit_index][segment_index] where segment_index 0-6 = A-G
 static const uint8_t DIGITS[7][7] = {
@@ -127,7 +151,10 @@ static const uint8_t CHAR_TABLE[12] = {
 };
 
 // Indicators
-#define IND_PRI   SEG(3, 2)
+#define IND_CH        SEG(2, 2)
+#define ARROW_UP      SEG(2, 1)
+#define ARROW_DN      SEG(3, 1)
+#define IND_PRI       SEG(3, 2)
 #define IND_NAR   SEG(8, 2)
 #define IND_FM    SEG(9, 2)
 #define IND_AM    SEG(14, 2)
