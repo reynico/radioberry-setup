@@ -31,10 +31,14 @@ const uint8_t RELAY_COUNT = sizeof(RELAY_PINS);
 const uint8_t PTT_PIN = 10;
 const uint8_t TX_PIN = 13;
 const uint8_t PA_PIN = 9;
+const uint8_t RB_PTT_PIN = A6;
+const int ANALOG_THRESHOLD_ON = 600;
+const int ANALOG_THRESHOLD_OFF = 400;
 
 volatile uint8_t currentCW = 0;
 volatile bool genericMode = false;
 volatile bool transmit = false;
+bool rbPttState = false;
 int currentBand = 0;
 uint8_t lastPttState = HIGH;
 unsigned long lastPttCheck = 0;
@@ -86,11 +90,21 @@ void loop() {
   unsigned long currentTime = millis();
   if (currentTime - lastPttCheck >= PTT_DEBOUNCE) {
     uint8_t pttState = digitalRead(PTT_PIN);
+    int rbPttRead = analogRead(RB_PTT_PIN);
+
+    if (rbPttState && rbPttRead < ANALOG_THRESHOLD_OFF) {
+      rbPttState = false;
+    } else if (!rbPttState && rbPttRead > ANALOG_THRESHOLD_ON) {
+      rbPttState = true;
+    }
 
     if (pttState != lastPttState) {
-      processPTT(pttState);
+      transmit = (pttState == LOW);
+      digitalWrite(TX_PIN, pttState);
       lastPttState = pttState;
     }
+
+    digitalWrite(PA_PIN, transmit || rbPttState);
     lastPttCheck = currentTime;
   }
 
@@ -126,12 +140,6 @@ void receiveEvent(int bytes) {
   if (byte1 != 4 && command != 0 && command != currentBand) {
     processCommand(command);
   }
-}
-
-inline void processPTT(uint8_t state) {
-  transmit = (state == LOW);
-  digitalWrite(TX_PIN, state);
-  digitalWrite(PA_PIN, transmit);
 }
 
 void processCommand(int command) {
