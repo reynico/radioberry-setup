@@ -38,6 +38,7 @@ const int ANALOG_THRESHOLD_OFF = 400;
 volatile uint8_t currentCW = 0;
 volatile bool genericMode = false;
 volatile bool transmit = false;
+volatile bool i2cReady = false;
 bool rbPttState = false;
 int currentBand = 0;
 uint8_t lastPttState = HIGH;
@@ -90,12 +91,14 @@ void loop() {
   unsigned long currentTime = millis();
   if (currentTime - lastPttCheck >= PTT_DEBOUNCE) {
     uint8_t pttState = digitalRead(PTT_PIN);
-    int rbPttRead = analogRead(RB_PTT_PIN);
 
-    if (rbPttState && rbPttRead < ANALOG_THRESHOLD_OFF) {
-      rbPttState = false;
-    } else if (!rbPttState && rbPttRead > ANALOG_THRESHOLD_ON) {
-      rbPttState = true;
+    if (i2cReady) {
+      int rbPttRead = analogRead(RB_PTT_PIN);
+      if (rbPttState && rbPttRead < ANALOG_THRESHOLD_OFF) {
+        rbPttState = false;
+      } else if (!rbPttState && rbPttRead > ANALOG_THRESHOLD_ON) {
+        rbPttState = true;
+      }
     }
 
     if (pttState != lastPttState) {
@@ -112,6 +115,7 @@ void loop() {
 }
 
 void receiveEvent(int bytes) {
+  i2cReady = true;
   if (bytes < 3) return;
   
   uint8_t byte1 = Wire.read();
