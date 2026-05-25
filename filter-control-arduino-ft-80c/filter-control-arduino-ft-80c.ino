@@ -1,8 +1,12 @@
 #include <Wire.h>
 
 const uint8_t I2C_ADDRESS = 0x21;
-const uint8_t COMMAND_ON_OFF = 0x01;
-const uint8_t COMMAND_SPEED = 0x02;
+const uint8_t PCA9555_OUTPUT_PORT_0 = 0x02;
+const uint8_t PCA9555_OUTPUT_PORT_1 = 0x03;
+const uint8_t PCA9555_CONFIGURATION_PORT_0 = 0x06;
+const uint8_t PCA9555_CONFIGURATION_PORT_1 = 0x07;
+const uint8_t PCA9555_REGISTER_COUNT = 8;
+const uint8_t I2C_BUFFER_SIZE = 8;
 
 struct FilterMap {
   int command;
@@ -35,10 +39,13 @@ const uint8_t RB_PTT_PIN = A6;
 const int ANALOG_THRESHOLD_ON = 600;
 const int ANALOG_THRESHOLD_OFF = 400;
 
-volatile uint8_t currentCW = 0;
-volatile bool genericMode = false;
 volatile bool transmit = false;
 volatile bool i2cReady = false;
+volatile bool i2cPacketPending = false;
+volatile uint8_t i2cPacketLength = 0;
+volatile uint8_t i2cPacket[I2C_BUFFER_SIZE];
+volatile uint8_t pca9555Registers[PCA9555_REGISTER_COUNT] = {0};
+volatile uint8_t pca9555ReadRegister = 0;
 bool rbPttState = false;
 int currentBand = 0;
 uint8_t lastPttState = HIGH;
@@ -46,22 +53,22 @@ unsigned long lastPttCheck = 0;
 const unsigned long PTT_DEBOUNCE = 5; // 5ms debounce
 
 void setup() {
+  Wire.begin(I2C_ADDRESS);
+  Wire.onRequest(requestEvent);
+  Wire.onReceive(receiveEvent);
+
   Serial.begin(115200);
-  
+
   for (uint8_t i = 0; i < RELAY_COUNT; i++) {
     pinMode(RELAY_PINS[i], OUTPUT);
     digitalWrite(RELAY_PINS[i], LOW);
   }
-  
+
   pinMode(PTT_PIN, INPUT_PULLUP);
   pinMode(TX_PIN, OUTPUT);
   pinMode(PA_PIN, OUTPUT);
   digitalWrite(TX_PIN, HIGH);
   digitalWrite(PA_PIN, LOW);
-  
-  Wire.begin(I2C_ADDRESS);
-  Wire.onRequest(requestEvent);
-  Wire.onReceive(receiveEvent);
 }
 
 inline void setBPF(uint8_t filterNumber) {
@@ -84,10 +91,73 @@ uint8_t getFilterValue(int command) {
 }
 
 void requestEvent() {
-  Wire.write(0);
+  Wire.write(pca9555Registers[pca9555ReadRegister & (PCA9555_REGISTER_COUNT - 1)]);
+  pca9555ReadRegister = (pca9555ReadRegister + 1) & (PCA9555_REGISTER_COUNT - 1);
+}
+
+void processCommand(int command);
+
+static void applyPca9555Outputs() {
+  int command = (pca9555Registers[PCA9555_OUTPUT_PORT_0] * 100) + pca9555Registers[PCA9555_OUTPUT_PORT_1];
+
+  if (command != currentBand) {
+    processCommand(command);
+  }
+}
+
+static void handlePca9555Write(const uint8_t* data, uint8_t length) {
+  uint8_t reg = data[0] & (PCA9555_REGISTER_COUNT - 1);
+  bool outputsChanged = false;
+
+  pca9555ReadRegister = reg;
+
+  for (uint8_t i = 1; i < length && reg < PCA9555_REGISTER_COUNT; i++, reg++) {
+    pca9555Registers[reg] = data[i];
+    if (reg == PCA9555_OUTPUT_PORT_0 || reg == PCA9555_OUTPUT_PORT_1) {
+      outputsChanged = true;
+    }
+  }
+
+  pca9555ReadRegister = reg & (PCA9555_REGISTER_COUNT - 1);
+
+  if (outputsChanged
+      && pca9555Registers[PCA9555_CONFIGURATION_PORT_0] == 0x00
+      && pca9555Registers[PCA9555_CONFIGURATION_PORT_1] == 0x00) {
+    applyPca9555Outputs();
+  }
+}
+
+static void processPendingI2cPacket() {
+  if (!i2cPacketPending) {
+    return;
+  }
+
+  uint8_t packet[I2C_BUFFER_SIZE];
+  uint8_t length = 0;
+
+  noInterrupts();
+  length = i2cPacketLength;
+  for (uint8_t i = 0; i < length; i++) {
+    packet[i] = i2cPacket[i];
+  }
+  i2cPacketPending = false;
+  interrupts();
+
+  if (length == 0) {
+    return;
+  }
+
+  if (length == 1) {
+    pca9555ReadRegister = packet[0] & (PCA9555_REGISTER_COUNT - 1);
+    return;
+  }
+
+  handlePca9555Write(packet, length);
 }
 
 void loop() {
+  processPendingI2cPacket();
+
   unsigned long currentTime = millis();
   if (currentTime - lastPttCheck >= PTT_DEBOUNCE) {
     uint8_t pttState = digitalRead(PTT_PIN);
@@ -115,35 +185,20 @@ void loop() {
 }
 
 void receiveEvent(int bytes) {
+  (void)bytes;
   i2cReady = true;
-  if (bytes < 3) return;
-  
-  uint8_t byte1 = Wire.read();
-  uint8_t byte2 = Wire.read();
-  uint8_t byte3 = Wire.read();
-  
+  uint8_t length = 0;
+
+  while (Wire.available() && length < I2C_BUFFER_SIZE) {
+    i2cPacket[length++] = Wire.read();
+  }
+
   while (Wire.available()) {
     Wire.read();
   }
-  
-  int command = 0;
 
-  if (byte1 == 2 && byte2 == 2 && byte3 == 3) {
-    genericMode = true;
-    return;
-  }
-
-  command = (byte2 * 100) + byte3;
-
-  if (byte1 == 3) {
-    currentCW = byte3;
-  } else {
-    currentCW = 0;
-  }
-
-  if (byte1 != 4 && command != 0 && command != currentBand) {
-    processCommand(command);
-  }
+  i2cPacketLength = length;
+  i2cPacketPending = true;
 }
 
 void processCommand(int command) {
